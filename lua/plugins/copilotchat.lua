@@ -1,0 +1,49 @@
+if true then return {} end
+-- return {
+--   "CopilotC-Nvim/CopilotChat.nvim",
+--   dependencies = {
+--     "zbirenbaum/copilot.lua",
+--     "nvim-lua/plenary.nvim",
+--     "MunifTanjim/nui.nvim",
+--   },
+--   cmd = { "CopilotChat", "CopilotChatOpen", "CopilotChatClose", "CopilotChatStop" },
+--   -- keys = {
+--   --   { "<leader>ac", "<cmd>CopilotChatToggle<cr>", desc = "Agent: Toggle Chat" },
+--   --   { "<leader>ae", function() require("CopilotChat").ask("Explain this code") end, mode = "v", desc = "Agent: Explain selection" },
+--   --   { "<leader>ar", function() require("CopilotChat").ask("Refactor this code") end, mode = "v", desc = "Agent: Refactor selection" },
+--   --   { "<leader>af", function() require("CopilotChat").ask("Find and fix bugs in this code") end, mode = "v", desc = "Agent: Fix selection" },
+--   --   { "<leader>at", function() require("CopilotChat").ask("Write unit tests for this code") end, mode = "v", desc = "Agent: Tests for selection" },
+--   -- },
+--   opts = {
+--     model = "gpt-4o",
+--     window = { width = 0.38, layout = "float", border = "rounded" },
+--     context = "buffers",
+--     suggestion = {
+--       auto_trigger = true,
+--       keymap = {
+--         accept = true, -- we use <Tab> already
+--         accept_word = "<C-l>",
+--         accept_line = "<C-j>",
+--         next = "<M-]>",
+--         prev = "<M-[>",
+--         dismiss = "<C-]>",
+--       },
+--     },
+--     -- DON'T require here
+--     -- selection = require("CopilotChat.select").visual,
+--   },
+--   config = function(_, opts)
+--     -- Do the require AFTER the plugin is loaded
+--     local select = require("CopilotChat.select")
+--     opts.selection = select.visual
+--
+--     require("CopilotChat").setup(opts)
+--
+--     local ok, wk = pcall(require, "which-key")
+--     if ok then wk.add({ { "<leader>a", group = "Agent (CopilotChat)" } }) end
+--     vim.keymap.set("i", "<C-CR>", function()
+--       local ok, s = pcall(require, "copilot.suggestion")
+--       if ok and s.is_visible() then s.accept() end
+--     end, { desc = "Copilot accept" })
+--   end,
+-- }

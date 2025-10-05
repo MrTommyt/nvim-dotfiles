@@ -1,0 +1,141 @@
+-- local M = {}
+--
+-- local on_attach = function(client, bufnr)
+--   client.server_capabilities.documentFormattingProvider = true
+--   local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
+--
+--   buf_set_option("omnifunc", "v:lua.vim.lsp.omnifunc")
+-- end
+--
+-- M.on_attach = on_attach;
+--
+-- M.settings = {
+--   codeAction = {
+--     disableRuleComment = {
+--       enable = true,
+--       location = "separateLine"
+--     },
+--     showDocumentation = {
+--       enable = true
+--     }
+--   },
+--   codeActionOnSave = {
+--     enable = false,
+--     mode = "all"
+--   },
+--   format = true,
+--   nodePath = "",
+--   onIgnoredFiles = "off",
+--   packageManager = "npm",
+--   quiet = false,
+--   rulesCustomizations = {},
+--   run = "onType",
+--   useESLintClass = false,
+--   validate = "on",
+--   workingDirectory = {
+--     mode = "location"
+--   }
+-- }
+--
+-- return M
+-- require("conform").setup({
+--   formatters_by_ft = {
+--     javascript = { "prettier" },
+--     javascriptreact = { "prettier" },
+--     typescript = { "prettier" },
+--     typescriptreact = { "prettier" },
+--     json = { "prettier" }, css = { "prettier" }, html = { "prettier" },
+--   },
+--   format_on_save = function() return { timeout_ms = 2000, lsp_format = "never" } end,
+-- })
+--
+-- -- require("aerial").setup({})
+-- -- vim.keymap.set("n", "<leader>po", "<cmd>AerialToggle!<cr>", { desc = "Toggle Outline" })
+--
+-- local lsp = require("lspconfig")
+-- local util = require("lspconfig.util")
+--
+-- -- Capabilities (nvim-cmp friendly if you use it)
+-- local capabilities = vim.lsp.protocol.make_client_capabilities()
+-- local ok_cmp, cmp_lsp = pcall(require, "cmp_nvim_lsp")
+-- if ok_cmp then capabilities = cmp_lsp.default_capabilities(capabilities) end
+--
+-- -- ONE tsserver, not denols (avoid conflicts)
+-- local ts_root = util.root_pattern(
+--   "tsconfig.json",
+--   "package.json",
+--   "pnpm-workspace.yaml",
+--   "yarn.lock",
+--   "bun.lockb",
+--   ".git"
+-- )
+--
+-- lsp.tsserver.setup({
+--   capabilities = capabilities,
+--   root_dir = function(fname)
+--     return ts_root(fname) or util.find_git_ancestor(fname)
+--   end,
+--   on_attach = function(client, bufnr)
+--     -- If you use Prettier/none-ls for formatting, turn this off:
+--     client.server_capabilities.documentFormattingProvider = false
+--
+--     -- Handy keymaps
+--     local map = function(mode, lhs, rhs, desc)
+--       vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, desc = desc })
+--     end
+--     -- map("n", "gp", vim.lsp.buf.definition, "Go to definition")
+--     map("n", "gr", vim.lsp.buf.references, "References")
+--     map("n", "K",  vim.lsp.buf.hover, "Hover")
+--     map("n", "<leader>rn", vim.lsp.buf.rename, "Rename")
+--     map("n", "<leader>ca", vim.lsp.buf.code_action, "Code actions")
+--   end,
+--   -- Some nice TS/React preferences
+--   init_options = {
+--     hostInfo = "neovim",
+--     preferences = {
+--       includeCompletionsForModuleExports = true,
+--       includeCompletionsWithInsertTextCompletions = true,
+--       quotePreference = "auto",
+--       importModuleSpecifierPreference = "non-relative",
+--       jsxAttributeCompletionStyle = "auto",
+--     },
+--   },
+-- })
+--
+-- -- ESLint: live lint + fix on save
+-- lsp.eslint.setup({
+--   capabilities = capabilities,
+--   root_dir = function(fname)
+--     -- Let eslint-lsp locate the closest config or fall back to package.json/.git root
+--     return util.root_pattern(
+--       -- Flat config
+--       "eslint.config.js", "eslint.config.cjs", "eslint.config.mjs",
+--       -- Legacy config
+--       ".eslintrc", ".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json", ".eslintrc.yml", ".eslintrc.yaml",
+--       "package.json", ".git"
+--     )(fname)
+--   end,
+--   settings = {
+--     -- Faster feedback than only on save:
+--     run = "onType",
+--     -- Auto-detect per-package working directories in monorepos:
+--     workingDirectories = { { mode = "auto" } },
+--     -- If you use flat config, turn this on:
+--     -- experimental = { useFlatConfig = true },
+--     -- Make sure these languages are validated (JS/TS + React)
+--     validate = "on",
+--   },
+--   on_attach = function(client, bufnr)
+--     -- Auto "Fix All" on save (imports, no-unused-vars, etc.)
+--     vim.api.nvim_create_autocmd("BufWritePre", {
+--       buffer = bufnr,
+--       callback = function()
+--         vim.lsp.buf.code_action({
+--           context = { only = { "source.fixAll.eslint" } },
+--           apply = true,
+--         })
+--       end,
+--     })
+--   end,
+-- })
+return {}

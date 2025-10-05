@@ -1,0 +1,54 @@
+return {}
+-- -- lspconfig setup
+-- local lspconfig = require("lspconfig")
+--
+-- -- If you use nvim-cmp:
+-- local capabilities = vim.lsp.protocol.make_client_capabilities()
+-- local ok_cmp, cmp_lsp = pcall(require, "cmp_nvim_lsp")
+-- if ok_cmp then
+--   capabilities = cmp_lsp.default_capabilities(capabilities)
+-- end
+--
+-- -- Common on_attach to wire formatting/code actions on save
+-- local function on_attach(client, bufnr)
+--   -- ESlint: run "fixAll" on save
+--   if client.name == "eslint" then
+--     vim.api.nvim_create_autocmd("BufWritePre", {
+--       buffer = bufnr,
+--       callback = function()
+--         -- Ask server for source.fixAll.eslint
+--         vim.lsp.buf.code_action({
+--           context = { only = { "source.fixAll.eslint" } },
+--           apply = true,
+--         })
+--       end,
+--     })
+--   end
+--
+--   -- Keymaps for quick fixes
+--   local keymap = vim.keymap.set
+--   keymap("n", "<leader>ca", vim.lsp.buf.code_action, { buffer = bufnr, desc = "Code Action" })
+--   keymap("n", "<leader>e", vim.diagnostic.open_float, { buffer = bufnr, desc = "Line Diagnostics" })
+-- end
+--
+-- -- ESLint LSP
+-- lspconfig.eslint.setup({
+--   capabilities = capabilities,
+--   on_attach = on_attach,
+--   settings = {
+--     -- Let eslint-lsp read your local node_modules/.bin/eslint
+--     -- and project configs. Usually no extra settings needed.
+--     -- You can enable format if you want ESLint to format too:
+--     -- format = true,
+--   },
+-- })
+--
+-- -- JS/TS server for language features (not formatting, we defer to Prettier)
+-- lspconfig.tsserver.setup({
+--   capabilities = capabilities,
+--   on_attach = function(client, bufnr)
+--     -- Disable tsserver formatting if you plan to use Prettier
+--     client.server_capabilities.documentFormattingProvider = false
+--     on_attach(client, bufnr)
+--   end,
+-- })

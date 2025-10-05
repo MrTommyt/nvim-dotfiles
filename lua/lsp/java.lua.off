@@ -1,0 +1,238 @@
+-- Java / jdtls setup for AstroNvim v5 + lspsaga peek
+-- Drop this file at: ~/.config/nvim/lua/plugins/java.lua
+
+return {
+  {
+    "nvimdev/lspsaga.nvim",
+    event = "LspAttach",
+    config = function()
+      require("lspsaga").setup({})
+      local opts = { noremap = true, silent = true }
+
+      pcall(vim.keymap.del, "n", "gp")
+      pcall(vim.keymap.del, "n", "gP")
+      -- Peek definitions in a floating mini-window
+      vim.keymap.set("n", "gp", "<cmd>Lspsaga peek_definition<CR>", opts)
+      vim.keymap.set("n", "gP", "<cmd>Lspsaga peek_type_definition<CR>", opts)
+
+      -- Finder (definitions + references + implementations)
+      vim.keymap.set("n", "gf", "<cmd>Lspsaga finder<CR>", opts)
+
+      -- Hover docs
+      vim.keymap.set("n", "K", "<cmd>Lspsaga hover_doc<CR>", opts)
+
+      -- Diagnostics
+      vim.keymap.set("n", "<leader>cd", "<cmd>Lspsaga show_line_diagnostics<CR>", opts)
+    end,
+  },
+  --------------------------------------------------------------------------
+  -- 1) Stop mason-lspconfig/lspconfig from starting a second jdtls client
+  --------------------------------------------------------------------------
+  {
+    "williamboman/mason-lspconfig.nvim",
+    opts = function(_, opts)
+      opts = opts or {}
+      opts.handlers = opts.handlers or {}
+      -- disable jdtls auto-setup (we use nvim-jdtls below)
+      opts.handlers.jdtls = function() end
+      return opts
+    end,
+  },
+  {
+    "neovim/nvim-lspconfig",
+    opts = function(_, opts)
+      opts = opts or {}
+      if opts.servers then opts.servers.jdtls = nil end
+      return opts
+    end,
+  },
+
+  --------------------------------------------------------------------------
+  -- 2) jdtls proper
+  --------------------------------------------------------------------------
+  {
+    "mfussenegger/nvim-jdtls",
+    ft = { "java" },
+
+    -- also load plugin for classfile buffers (jdt:// URIs)
+    init = function()
+      vim.api.nvim_create_autocmd("BufReadCmd", {
+        pattern = "jdt://*",
+        callback = function()
+          require("lazy").load({ plugins = { "nvim-jdtls" } })
+        end,
+      })
+    end,
+
+    config = function()
+      -- Mason paths
+      local mason = vim.fn.stdpath("data") .. "/mason"
+      local jdtls_root = mason .. "/packages/jdtls"
+      local launcher = vim.fn.glob(jdtls_root .. "/plugins/org.eclipse.equinox.launcher_*.jar")
+      if launcher == "" then
+        vim.notify("Mason package 'jdtls' missing. Open :Mason and install jdtls.", vim.log.levels.ERROR)
+        return
+      end
+
+      local sysname = (vim.uv or vim.loop).os_uname().sysname
+      local config_dir = (sysname == "Darwin" and "config_mac")
+        or (vim.fn.has("win32") == 1 and "config_win" or "config_linux")
+
+      -- project root
+      local root_dir = require("jdtls.setup").find_root({ ".git", "mvnw", "gradlew", "pom.xml", "build.gradle" })
+      if not root_dir then return end
+
+      local home = vim.loop.os_homedir()
+      local data = vim.fn.stdpath("data")
+      local lombok_path = home .. "/.local/share/lombok/lombok.jar"
+      local workspace_dir = data .. "/jdtls-workspace/" .. vim.fn.fnamemodify(root, ":p:h:t")
+
+      local mason_base = data .. "/mason/packages/jdtls"
+      local launcher = vim.fn.glob(mason_base .. "/plugins/org.eclipse.equinox.launcher_*.jar")
+      local config_dir = mason_base .. "/config_linux"
+
+      -- jdtls command
+      local cmd = {
+        "java",
+        "-Declipse.application=org.eclipse.jdt.ls.core.id1",
+        "-Dosgi.bundles.defaultStartLevel=4",
+        "-Declipse.product=org.eclipse.jdt.ls.core.product",
+        "-Dlog.level=ERROR",
+        "-Xmx1g",
+        "-javaagent:" .. lombok_path,
+        "-jar", launcher,
+        "-configuration", config_dir,
+        "-data", vim.fn.stdpath("data") .. "/jdtls-workspace/" .. vim.fn.fnamemodify(root_dir, ":p:h:t"),
+      }
+
+      -- start/attach with sane defaults
+      require("jdtls").start_or_attach({
+        cmd = cmd,
+        root_dir = root_dir,
+        settings = {
+          java = {
+            maven  = { downloadSources = true },
+            import = { gradle = { enabled = true, downloadSources = true } },
+            contentProvider = { preferred = "fernflower" }, -- decompile when sources missing
+          },
+        },
+      })
+
+      ----------------------------------------------------------------------
+      -- 3) Ensure jdt:// buffers actually get content (decompiled or src)
+      ----------------------------------------------------------------------
+      -- one-time, anywhere in your Java plugin file
+      -- local grp = vim.api.nvim_create_augroup("JdtlsClassfile", { clear = true })
+      -- vim.api.nvim_create_autocmd("BufReadCmd", {
+      --   group = grp,
+      --   pattern = "jdt://*",
+      --   callback = function(ev)
+      --     local ok, jdtls = pcall(require, "jdtls")
+      --     if not ok then return end
+      --     local uri = vim.api.nvim_buf_get_name(ev.buf)
+      --     if type(uri) ~= "string" or uri == "" then return end
+      --     -- populate THIS buffer, without touching other windows
+      --     vim.api.nvim_buf_call(ev.buf, function()
+      --       pcall(jdtls.open_classfile, uri)
+      --     end)
+      --   end,
+      -- })
+
+      ----------------------------------------------------------------------
+      -- 4) Single buffer-local gp mapping (smart + resilient)
+      ----------------------------------------------------------------------
+      -- inside your LspAttach for jdtls
+      -- DELETE any BufReadCmd jdt://* you added earlier.
+      vim.api.nvim_create_autocmd("LspAttach", {
+        group = vim.api.nvim_create_augroup("JavaPeekKeys", { clear = true }),
+        callback = function(args)
+          local client = vim.lsp.get_client_by_id(args.data.client_id)
+          if not client or client.name ~= "jdtls" then return end
+
+          -- ensure a single gp per Java buffer
+          pcall(vim.keymap.del, "n", "gp", { buffer = args.buf })
+
+          local function preview_jdt_uri(uri)
+            -- 1) make a scratch buffer and NAME it with the jdt:// URI
+            local buf = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_name(buf, uri)
+            vim.bo[buf].bufhidden = "wipe"
+            vim.bo[buf].filetype = "java"   -- helps highlight even before content
+
+            -- 2) open a floating window for that buffer (so we don't touch the main one)
+            local win = vim.api.nvim_open_win(buf, true, {
+              relative = "cursor",
+              row = 1, col = 2,
+              width  = math.floor(vim.o.columns * 0.7),
+              height = math.floor(vim.o.lines   * 0.7),
+              border = "rounded",
+              style = "minimal",
+              noautocmd = true,
+            })
+            vim.keymap.set("n", "q", function()
+              if vim.api.nvim_win_is_valid(win) then pcall(vim.api.nvim_win_close, win, true) end
+            end, { buffer = buf, nowait = true, silent = true })
+
+            -- 3) attach the existing jdtls client to THIS buffer
+            local jdt = nil
+            for _, c in ipairs(vim.lsp.get_active_clients({ bufnr = args.buf })) do
+              if c.name == "jdtls" then jdt = c; break end
+            end
+            if not jdt then return end
+            -- If it's not already attached, attach it explicitly
+            local attached = false
+            for _, id in ipairs(vim.lsp.get_buffers_by_client_id(jdt.id)) do
+              if id == buf then attached = true; break end
+            end
+            if not attached then pcall(vim.lsp.buf_attach_client, buf, jdt.id) end
+
+            -- 4) now ask jdtls to populate the float's buffer with the classfile
+            local ok, jdtls = pcall(require, "jdtls")
+            if ok then
+              vim.api.nvim_win_call(win, function()
+                pcall(jdtls.open_classfile, uri)  -- writes into the *current* window's buffer
+              end)
+            end
+
+            -- 5) if content arrives a tick late, retry a few times
+            local tries = 0
+            local function ensure_filled()
+              if not vim.api.nvim_buf_is_valid(buf) or not vim.api.nvim_win_is_valid(win) then return end
+              local ok_lines, n = pcall(vim.api.nvim_buf_line_count, buf)
+              if ok_lines and n > 1 then return end
+              tries = tries + 1
+              if tries >= 6 then return end
+              if ok then
+                vim.api.nvim_win_call(win, function()
+                  pcall(jdtls.open_classfile, uri)
+                end)
+              end
+              vim.defer_fn(ensure_filled, 120)
+            end
+            vim.defer_fn(ensure_filled, 80)
+          end
+
+          -- gp: files → Saga peek; jdt:// → our float (no main buffer jump)
+          vim.keymap.set("n", "gp", function()
+            local enc = client.offset_encoding or "utf-16"  -- Neovim 0.11 + jdtls
+            local params = vim.lsp.util.make_position_params(0, enc)
+            vim.lsp.buf_request(0, "textDocument/definition", params, function(_, res)
+              local first = (type(res) == "table" and (res[1] or res)) or res
+              if not first then return end
+              local uri = first.uri or first.targetUri or ""
+              if uri:match("^jdt://") then
+                preview_jdt_uri(uri)
+              else
+                local ok = pcall(vim.cmd, "Lspsaga peek_definition")
+                if not ok then
+                  local ok_tb, tb = pcall(require, "telescope.builtin")
+                  if ok_tb then tb.lsp_definitions({ jump_type = "never" }) end
+                end
+              end
+            end)
+          end, { buffer = args.buf, silent = true, desc = "Peek Definition (smart float)" })
+        end,
+      })
+    end,
+  },
+}

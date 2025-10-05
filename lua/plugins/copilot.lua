@@ -1,0 +1,40 @@
+if true then return {} end
+-- return {
+--   "zbirenbaum/copilot.lua",
+--   cmd = "Copilot",
+--   build = ":Copilot auth",
+--   event = "BufReadPost",
+--   opts = {
+--     panel = { enabled = false },
+--     suggestion = {
+--       enabled = true,
+--       auto_trigger = true,
+--       keymap = {
+--         accept = false
+--       }
+--     }, -- accept via recipe
+--   },
+--   config = function(_, opts)
+--     require("copilot").setup(opts)
+--     -- Explicit accept key that only fires when a suggestion is visible
+--     vim.keymap.set("i", "<C-CR>", function()
+--       local ok, s = pcall(require, "copilot.suggestion")
+--       if ok and s.is_visible() then s.accept() end
+--     end, { desc = "Copilot accept" })
+--   end,
+--   specs = {
+--     {
+--       "AstroNvim/astrocore",
+--       opts = {
+--         options = {
+--           g = {
+--             ai_accept = function()
+--               local ok, s = pcall(require, "copilot.suggestion")
+--               if ok and s.is_visible() then s.accept(); return true end
+--             end,
+--           },
+--         },
+--       },
+--     },
+--   },
+-- }
