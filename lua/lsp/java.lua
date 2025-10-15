@@ -66,8 +66,11 @@ return {
       return opts
     end,
   },
-
-  -- nvim-jdtls: start/attach per buffer/project
+  { 
+    "nvim-java/nvim-java", 
+    config = true,
+  }, -- pulls spring-boot.nvim and wires STS4
+  -- { "nvim-java/spring-boot.nvim", config = true }, -- force STS4 attach
   {
     "mfussenegger/nvim-jdtls",
     ft = { "java" },
@@ -145,6 +148,29 @@ return {
         pattern = "java",
         callback = function(args)
           local cfg = jdtls_config_for_buf(args.buf)
+          local mason = vim.fn.stdpath("data") .. "/mason/packages"
+
+          local bundles = {
+            vim.fn.glob(mason .. "/java-debug-adapter/extension/server/com.microsoft.java.debug.plugin-*.jar", 1),
+          }
+          vim.list_extend(bundles, vim.split(vim.fn.glob(mason .. "/java-test/extension/server/*.jar", 1), "\n"))
+
+          local config = {
+            cmd = { "jdtls" },  -- or the full path from Mason
+            root_dir = require("jdtls.setup").find_root({ ".git", "mvnw", "gradlew", "pom.xml", "build.gradle" }),
+            init_options = { bundles = bundles },  -- critical for DAP commands
+            settings = {
+              java = {
+                configuration = {
+                  runtimes = {},
+                  updateBuildConfiguration = "automatic"
+                },
+                completion = { favoriteStaticMembers = {} },
+              }
+            },
+          }
+
+          -- for k,v in pairs(config) do cfg[k] = v end
           if not cfg then return end
           require("jdtls").start_or_attach(cfg)
         end,
