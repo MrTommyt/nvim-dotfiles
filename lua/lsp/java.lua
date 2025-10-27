@@ -66,10 +66,11 @@ return {
       return opts
     end,
   },
-  { 
-    "nvim-java/nvim-java", 
+  {
+    "nvim-java/nvim-java",
     config = true,
-  }, -- pulls spring-boot.nvim and wires STS4
+  },
+  -- pulls spring-boot.nvim and wires STS4
   -- { "nvim-java/spring-boot.nvim", config = true }, -- force STS4 attach
   {
     "mfussenegger/nvim-jdtls",
@@ -106,6 +107,7 @@ return {
           or "config_linux"
 
         -- optional Lombok
+        -- wget https://projectlombok.org/downloads/lombok.jar -O ~/.local/share/lombok/lombok.jar
         local home = (vim.uv or vim.loop).os_homedir()
         local lombok = home .. "/.local/share/lombok/lombok.jar"
         local has_lombok = vim.fn.filereadable(lombok) == 1
@@ -156,7 +158,7 @@ return {
           vim.list_extend(bundles, vim.split(vim.fn.glob(mason .. "/java-test/extension/server/*.jar", 1), "\n"))
 
           local config = {
-            cmd = { "jdtls" },  -- or the full path from Mason
+            -- cmd = { "jdtls" },  -- or the full path from Mason
             root_dir = require("jdtls.setup").find_root({ ".git", "mvnw", "gradlew", "pom.xml", "build.gradle" }),
             init_options = { bundles = bundles },  -- critical for DAP commands
             settings = {

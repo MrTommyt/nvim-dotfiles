@@ -62,45 +62,46 @@ require("lazy").setup({
   --   -- This is for lazy load and more performance on startup only
   --   cmd = { "InjectmeToggle", "InjectmeSave", "InjectmeInfo" , "InjectmeLeave"},
   -- },
-  {
-    "dariuscorvus/tree-sitter-language-injection.nvim",
-    opts = {
-      java = {
-        string = {
-          langs = {
-            { name = "sql", match = "^(\r\n|\r|\n)*-{2,}( )*{lang}" }
-          },
-          query = [[
-            ; query
-            ;; string {name} injection
-            ((string_fragment) @injection.content
-                            (#match? @injection.content "{match}")
-                            (#set! injection.language "{name}"))
-          ]]
-        },
-        comment = {
-          langs = {
-            { name = "sql", match = "^//+( )*{lang}( )*" }
-          },
-          query = [[
-            ; query
-            ;; comment {name} injection
-            ((comment) @comment .
-              (lexical_declaration
-                (variable_declarator
-                  value: [
-                    (string(string_fragment)@injection.content)
-                    (template_string(string_fragment)@injection.content)
-                  ]@injection.content)
-              )
-              (#match? @comment "{match}")
-              (#set! injection.language "{name}")
-            )
-          ]]
-        }
-      }
-    }, -- calls setup()
-  },
+
+  -- {
+  --   "dariuscorvus/tree-sitter-language-injection.nvim",
+  --   opts = {
+  --     java = {
+  --       string = {
+  --         langs = {
+  --           { name = "sql", match = "^(\r\n|\r|\n)*-{2,}( )*{lang}" }
+  --         },
+  --         query = [[
+  --           ; query
+  --           ;; string {name} injection
+  --           ((string_fragment) @injection.content
+  --                           (#match? @injection.content "{match}")
+  --                           (#set! injection.language "{name}"))
+  --         ]]
+  --       },
+  --       comment = {
+  --         langs = {
+  --           { name = "sql", match = "^//+( )*{lang}( )*" }
+  --         },
+  --         query = [[
+  --           ; query
+  --           ;; comment {name} injection
+  --           ((comment) @comment .
+  --             (lexical_declaration
+  --               (variable_declarator
+  --                 value: [
+  --                   (string(string_fragment)@injection.content)
+  --                   (template_string(string_fragment)@injection.content)
+  --                 ]@injection.content)
+  --             )
+  --             (#match? @comment "{match}")
+  --             (#set! injection.language "{name}")
+  --           )
+  --         ]]
+  --       }
+  --     }
+  --   }, -- calls setup()
+  -- },
   { import = "community" },
   { import = "plugins" },
   { import = "lsp" },
