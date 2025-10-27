@@ -84,4 +84,21 @@ return {
   --     )
   --   end,
   -- },
+  { "clickup",
+    dir = "~/clickup.nvim/",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "ellisonleao/dotenv.nvim",
+    },
+    config = function (opts)
+      -- vim.notify(vim.inspect(vim.cmd.DotenvGet('OPENAI_API_KEY')))
+      -- vim.notify(vim.inspect(os.getenv('CLICKUP_API_KEY')))
+      require('clickup').setup({
+        api_token = os.getenv("CLICKUP_API_KEY"),
+        -- api_token = 'pk_43633891_2MFI5XJ7QJPIMCZWDCWYUX0LYFJ68RWS',
+        team_id = '36161990',
+        list_id = '901111855226',
+      })
+    end
+  }
 }

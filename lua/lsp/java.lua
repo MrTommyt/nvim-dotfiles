@@ -66,10 +66,10 @@ return {
       return opts
     end,
   },
-  {
-    "nvim-java/nvim-java",
-    config = true,
-  },
+  -- {
+  --   "nvim-java/nvim-java",
+  --   config = true,
+  -- },
   -- pulls spring-boot.nvim and wires STS4
   -- { "nvim-java/spring-boot.nvim", config = true }, -- force STS4 attach
   {
